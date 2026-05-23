@@ -1,0 +1,123 @@
+﻿erDiagram
+    AUTH_USER ||--o| USUARIOS_USUARIO : "perfil_sistema"
+    AUTH_USER ||--o| PACIENTES_PACIENTE : "paciente_perfil"
+
+    PACIENTES_PACIENTE ||--o{ TRIAGENS_TRIAGEM : "possui"
+    USUARIOS_USUARIO ||--o{ TRIAGENS_TRIAGEM : "realiza"
+
+    TRIAGENS_TRIAGEM ||--o{ TRIAGENS_RESPOSTATRIAGEM : "gera"
+    SINTOMAS_SINTOMA ||--o{ TRIAGENS_RESPOSTATRIAGEM : "classifica"
+
+    TRIAGENS_TRIAGEM ||--o| CLASSIFICACAO_RISCO_CLASSIFICACAORISCO : "recebe"
+    TRIAGENS_TRIAGEM ||--o| ENCAMINHAMENTOS_ENCAMINHAMENTO : "gera"
+
+    USUARIOS_USUARIO ||--o{ ENCAMINHAMENTOS_AGENDAPROFISSIONAL : "tem"
+
+    TRIAGENS_TRIAGEM ||--o| ENCAMINHAMENTOS_PREAGENDAMENTO : "pode_ter"
+    ENCAMINHAMENTOS_ENCAMINHAMENTO ||--o| ENCAMINHAMENTOS_PREAGENDAMENTO : "vincula"
+    ENCAMINHAMENTOS_AGENDAPROFISSIONAL ||--o{ ENCAMINHAMENTOS_PREAGENDAMENTO : "sugere_slot"
+    USUARIOS_USUARIO ||--o{ ENCAMINHAMENTOS_PREAGENDAMENTO : "profissional_sugerido"
+
+    AUTH_USER {
+        bigint id PK
+        varchar username
+        varchar password
+        varchar email
+    }
+
+    USUARIOS_USUARIO {
+        bigint id PK
+        bigint usuario_auth_id UK
+        varchar nome_completo
+        varchar email UK
+        varchar perfil
+        varchar especialidade
+        boolean ativo
+        timestamp data_criacao
+        timestamp data_atualizacao
+    }
+
+    PACIENTES_PACIENTE {
+        bigint id PK
+        bigint usuario_auth_id UK
+        varchar nome_completo
+        date data_nascimento
+        varchar sexo
+        varchar cpf UK
+        varchar telefone
+        varchar email
+        varchar endereco
+        text alergias
+        text comorbidades
+        text medicamentos_em_uso
+    }
+
+    SINTOMAS_SINTOMA {
+        bigint id PK
+        varchar nome UK
+        text descricao
+        boolean ativo
+    }
+
+    TRIAGENS_TRIAGEM {
+        bigint id PK
+        bigint paciente_id FK
+        bigint profissional_responsavel_id FK
+        timestamp data_hora_inicio
+        timestamp data_hora_fim
+        varchar status
+        text observacoes_gerais
+    }
+
+    TRIAGENS_RESPOSTATRIAGEM {
+        bigint id PK
+        bigint triagem_id FK
+        bigint sintoma_id FK
+        int intensidade
+        varchar duracao
+        boolean possui_sinal_alerta
+        text observacao
+    }
+
+    CLASSIFICACAO_RISCO_CLASSIFICACAORISCO {
+        bigint id PK
+        bigint triagem_id UK,FK
+        varchar nivel
+        int pontuacao
+        text justificativa
+        varchar protocolo_versao
+        timestamp data_classificacao
+    }
+
+    ENCAMINHAMENTOS_ENCAMINHAMENTO {
+        bigint id PK
+        bigint triagem_id UK,FK
+        varchar recomendacao
+        text descricao
+        varchar prazo_recomendado
+        timestamp data_geracao
+    }
+
+    ENCAMINHAMENTOS_AGENDAPROFISSIONAL {
+        bigint id PK
+        bigint profissional_id FK
+        varchar especialidade
+        timestamp inicio_atendimento
+        timestamp fim_atendimento
+        boolean reservado
+        boolean ativo
+    }
+
+    ENCAMINHAMENTOS_PREAGENDAMENTO {
+        bigint id PK
+        bigint triagem_id UK,FK
+        bigint encaminhamento_id UK,FK
+        bigint agenda_slot_id FK
+        bigint profissional_id FK
+        varchar especialidade
+        timestamp horario_sugerido
+        varchar status
+        text mensagem
+        timestamp data_geracao
+        timestamp data_atualizacao
+    }

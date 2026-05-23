@@ -1,0 +1,406 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teste Chat IA - Triagem</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --primary: #14532d;
+      --primary-soft: #dcfce7;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --danger: #991b1b;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #e8f5e9 0%, var(--bg) 45%);
+      color: var(--text);
+    }
+    .container {
+      max-width: 980px;
+      margin: 24px auto;
+      padding: 0 16px 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.06);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.4rem; }
+    .muted { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    label { font-size: .9rem; display: block; margin-bottom: 6px; }
+    input, textarea, button {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    button {
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .chat-box {
+      height: 340px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fcfcfd;
+    }
+    .msg { margin: 8px 0; padding: 10px; border-radius: 10px; max-width: 88%; }
+    .msg.user { background: #dbeafe; margin-left: auto; }
+    .msg.ai { background: var(--primary-soft); }
+    .status { font-size: .88rem; margin-top: 8px; }
+    .status.error { color: var(--danger); }
+    .result {
+      background: #f8fafc;
+      border: 1px dashed #94a3b8;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .row { display: flex; gap: 8px; margin-top: 8px; }
+    .row button { flex: 1; }
+    .agendamento-actions { margin-top: 10px; display: none; }
+    .agendamento-actions .hint { font-size: .85rem; color: var(--muted); margin: 0 0 6px; }
+    .agendamento-actions .row button { border-radius: 8px; }
+    .btn-confirmar { background: #166534; }
+    .btn-reagendar { background: #0f766e; }
+    .btn-cancelar { background: #7f1d1d; }
+    ul { margin: 8px 0 0 18px; }
+  </style>
+</head>
+<body>
+  <form style="display:none;">{% csrf_token %}</form>
+  <div class="container">
+    <div class="card">
+      <h1>Chat de Triagem com IA Local</h1>
+    </div>
+
+    <div class="card" id="authCard">
+      <div class="grid" id="authGrid">
+        <div>
+          <label>Usuário</label>
+          <input id="username" placeholder="seu usuário" />
+        </div>
+        <div>
+          <label>Senha</label>
+          <input id="password" type="password" placeholder="sua senha" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="btnLogin">Entrar</button>
+        <button id="btnLogout" style="background:#475569">Sair</button>
+      </div>
+      <div id="authStatus" class="status muted">Faça login para conversar.</div>
+    </div>
+
+    <div class="card">
+      <div id="chat" class="chat-box"></div>
+      <div style="margin-top:10px;">
+        <label>Mensagem</label>
+        <textarea id="mensagem" placeholder="Descreva seus sintomas..."></textarea>
+      </div>
+      <div class="row">
+        <button id="btnEnviar">Enviar para IA</button>
+        <button id="btnLimpar" style="background:#0f766e">Limpar conversa</button>
+      </div>
+      <div id="chatStatus" class="status muted"></div>
+      <div id="resultado" class="result" style="display:none"></div>
+      <div id="agendamentoAcoes" class="agendamento-actions">
+        <p class="hint">Ações de agendamento</p>
+        <div class="row">
+          <button id="btnConfirmarAgendamento" class="btn-confirmar" type="button">Confirmar</button>
+          <button id="btnReagendarAgendamento" class="btn-reagendar" type="button">Reagendar</button>
+          <button id="btnCancelarAgendamento" class="btn-cancelar" type="button">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const chatStatus = document.getElementById('chatStatus');
+    const authStatus = document.getElementById('authStatus');
+    const resultado = document.getElementById('resultado');
+    const authGrid = document.getElementById('authGrid');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const btnLogin = document.getElementById('btnLogin');
+    const btnLogout = document.getElementById('btnLogout');
+    const btnEnviar = document.getElementById('btnEnviar');
+    const agendamentoAcoes = document.getElementById('agendamentoAcoes');
+    const btnConfirmarAgendamento = document.getElementById('btnConfirmarAgendamento');
+    const btnReagendarAgendamento = document.getElementById('btnReagendarAgendamento');
+    const btnCancelarAgendamento = document.getElementById('btnCancelarAgendamento');
+    const historico = [];
+    let sessaoAtiva = false;
+
+    function getCookie(name) {
+      const cookies = document.cookie ? document.cookie.split(';') : [];
+      for (const item of cookies) {
+        const cookie = item.trim();
+        if (cookie.startsWith(name + '=')) {
+          return decodeURIComponent(cookie.substring(name.length + 1));
+        }
+      }
+      return '';
+    }
+
+    function getCsrfToken() {
+      const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+      if (input && input.value) return input.value;
+      return getCookie('csrftoken');
+    }
+
+    function headersJson() {
+      return {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      };
+    }
+
+    async function parseResposta(resp) {
+      const body = await resp.text();
+      if (!body) return {};
+      try {
+        return JSON.parse(body);
+      } catch (_) {
+        return { detalhe: body.slice(0, 300) };
+      }
+    }
+
+    function atualizarUIAutenticacao(autenticado, usuario = null) {
+      sessaoAtiva = autenticado;
+      btnEnviar.disabled = !autenticado;
+      btnLogout.style.display = autenticado ? 'block' : 'none';
+      if (!autenticado) {
+        ocultarAcoesAgendamento();
+      }
+      btnLogin.style.display = autenticado ? 'none' : 'block';
+      authGrid.style.display = autenticado ? 'none' : 'grid';
+      usernameInput.disabled = autenticado;
+      passwordInput.disabled = autenticado;
+
+      if (autenticado && usuario) {
+        authStatus.textContent = `Conectado como ${usuario.username} (${usuario.perfil || 'sem perfil'}).`;
+        authStatus.className = 'status';
+      } else if (!autenticado) {
+        authStatus.textContent = 'Faça login para conversar.';
+        authStatus.className = 'status muted';
+      }
+    }
+
+    async function carregarSessao() {
+      authStatus.textContent = 'Verificando sessão...';
+      authStatus.className = 'status muted';
+      try {
+        const resp = await fetch('/api/autenticacao/sessao/', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const data = await parseResposta(resp);
+        if (!resp.ok || !data.autenticado) {
+          atualizarUIAutenticacao(false);
+          return;
+        }
+        atualizarUIAutenticacao(true, data.usuario);
+      } catch (_) {
+        atualizarUIAutenticacao(false);
+        authStatus.textContent = 'Não foi possível verificar sua sessão agora.';
+        authStatus.className = 'status error';
+      }
+    }
+
+    function addMsg(role, text) {
+      const cssClass = role === 'user' ? 'user' : 'ai';
+      const ultimo = chat.lastElementChild;
+      if (ultimo && ultimo.classList.contains(cssClass) && ultimo.textContent === text) {
+        return;
+      }
+      const div = document.createElement('div');
+      div.className = `msg ${cssClass}`;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function ocultarAcoesAgendamento() {
+      agendamentoAcoes.style.display = 'none';
+    }
+
+    function mostrarAcoesAgendamento(pre) {
+      if (!pre) {
+        ocultarAcoesAgendamento();
+        return;
+      }
+
+      const status = String(pre.status || '').toLowerCase();
+      agendamentoAcoes.style.display = 'block';
+
+      btnConfirmarAgendamento.disabled = status === 'confirmado' || status === 'cancelado' || status === 'sem_vaga' || status === 'encaminhamento_direto';
+      btnReagendarAgendamento.disabled = status === 'encaminhamento_direto';
+      btnCancelarAgendamento.disabled = status === 'cancelado' || status === 'encaminhamento_direto';
+    }
+
+    function enviarComandoAgendamento(comando) {
+      document.getElementById('mensagem').value = comando;
+      enviar();
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      authStatus.textContent = 'Entrando...';
+      authStatus.className = 'status muted';
+
+      const resp = await fetch('/api/autenticacao/login/', {
+        method: 'POST',
+        headers: headersJson(),
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+      const data = await parseResposta(resp);
+
+      if (!resp.ok) {
+        authStatus.textContent = data.detalhe || data.detail || 'Falha no login.';
+        authStatus.className = 'status error';
+        return;
+      }
+
+      atualizarUIAutenticacao(true, data.usuario);
+    }
+
+    async function logout() {
+      await fetch('/api/autenticacao/logout/', { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, credentials: 'include' });
+      atualizarUIAutenticacao(false);
+    }
+
+    async function enviar() {
+      if (!sessaoAtiva) {
+        chatStatus.textContent = 'Você precisa estar conectado para enviar mensagem.';
+        chatStatus.className = 'status error';
+        return;
+      }
+
+      const mensagem = document.getElementById('mensagem').value.trim();
+      if (!mensagem) return;
+
+      addMsg('user', mensagem);
+      historico.push({ role: 'user', content: mensagem });
+      document.getElementById('mensagem').value = '';
+      chatStatus.textContent = 'Consultando IA local...';
+      chatStatus.className = 'status muted';
+      resultado.style.display = 'none';
+
+      const resp = await fetch('/api/chat-ia/triagem/', {
+        method: 'POST',
+        headers: headersJson(),
+        credentials: 'include',
+        body: JSON.stringify({ mensagem, historico })
+      });
+
+      const data = await parseResposta(resp);
+      if (!resp.ok) {
+        if (resp.status === 401 || resp.status === 403) {
+          atualizarUIAutenticacao(false);
+        }
+        const erro = data.detalhe || data.detail || 'Não foi possível concluir a solicitação.';
+        chatStatus.textContent = erro;
+        chatStatus.className = 'status error';
+        return;
+      }
+
+      addMsg('assistant', data.mensagem_ia || 'Sem resposta textual.');
+      historico.push({ role: 'assistant', content: data.mensagem_ia || '' });
+      chatStatus.textContent = data.erro_ia_local
+        ? 'IA local indisponível. Verifique se o Ollama está rodando.'
+        : 'Resposta recebida.';
+      chatStatus.className = data.erro_ia_local ? 'status error' : 'status';
+
+      if (data.triagem) {
+        const triagem = data.triagem;
+        const pre = triagem.pre_agendamento || {};
+        const horarioSugerido = pre.horario_sugerido
+          ? new Date(pre.horario_sugerido).toLocaleString('pt-BR')
+          : 'A definir';
+        const profissionalSugerido = pre.profissional?.nome_completo || 'A definir';
+
+        resultado.innerHTML = `
+          <strong>Triagem concluida</strong><br/>
+          Nivel: <strong>${triagem.classificacao.nivel}</strong><br/>
+          Pontuacao: <strong>${triagem.classificacao.pontuacao}</strong><br/>
+          Justificativa: ${triagem.classificacao.justificativa}<br/>
+          Recomendacao: <strong>${triagem.encaminhamento.recomendacao}</strong><br/>
+          Prazo: ${triagem.encaminhamento.prazo_recomendado}<br/>
+          Orientacao: ${triagem.orientacao_paciente}<br/>
+          Encaminhamento: <strong>${data.mensagem_encaminhamento || 'Siga a recomendacao da triagem.'}</strong><br/>
+          Profissional sugerido: <strong>${profissionalSugerido}</strong><br/>
+          Horario sugerido: <strong>${horarioSugerido}</strong>
+          <ul>${(triagem.proximos_passos || []).map(p => `<li>${p}</li>`).join('')}</ul>
+        `;
+        resultado.style.display = 'block';
+        mostrarAcoesAgendamento(pre);
+      } else if (data.pre_agendamento) {
+        const pre = data.pre_agendamento;
+        const horario = pre.horario_sugerido ? new Date(pre.horario_sugerido).toLocaleString('pt-BR') : 'A definir';
+        const profissional = pre.profissional?.nome_completo || 'A definir';
+        resultado.innerHTML = `
+          <strong>Atualizacao de agendamento</strong><br/>
+          Status: <strong>${pre.status}</strong><br/>
+          Profissional: <strong>${profissional}</strong><br/>
+          Horario: <strong>${horario}</strong><br/>
+          Mensagem: ${pre.mensagem || data.mensagem_ia}
+        `;
+        resultado.style.display = 'block';
+        mostrarAcoesAgendamento(pre);
+      } else {
+        ocultarAcoesAgendamento();
+      }
+    }
+
+    function limparConversa() {
+      historico.length = 0;
+      chat.innerHTML = '';
+      resultado.style.display = 'none';
+      ocultarAcoesAgendamento();
+      chatStatus.textContent = 'Conversa limpa.';
+      chatStatus.className = 'status muted';
+    }
+
+    btnLogin.addEventListener('click', login);
+    btnLogout.addEventListener('click', logout);
+    btnEnviar.addEventListener('click', enviar);
+    btnConfirmarAgendamento.addEventListener('click', () => enviarComandoAgendamento('confirmar agendamento'));
+    btnReagendarAgendamento.addEventListener('click', () => enviarComandoAgendamento('reagendar'));
+    btnCancelarAgendamento.addEventListener('click', () => enviarComandoAgendamento('cancelar'));
+    ocultarAcoesAgendamento();
+    document.getElementById('btnLimpar').addEventListener('click', limparConversa);
+    carregarSessao();
+  </script>
+</body>
+</html>
+
+
+

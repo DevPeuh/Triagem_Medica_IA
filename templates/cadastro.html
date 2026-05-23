@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar | CuralA</title>
+  <style>
+    body{margin:0;font-family:Inter,Segoe UI,sans-serif;background:#f3f8f4;color:#101713}
+    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .head a{text-decoration:none;color:#1f7a3a;font-weight:700}
+    .grid{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:#fff;border:1px solid #d7e4da;border-radius:14px;padding:18px}
+    h1{margin:0 0 8px;font-size:1.6rem} h2{margin:0 0 10px;font-size:1.25rem}
+    label{display:block;font-size:.9rem;margin:8px 0 4px}
+    .hint{font-size:.82rem;color:#56645c;margin:2px 0 8px}
+    input,select,button{width:100%;padding:10px 12px;border:1px solid #cfe0d4;border-radius:10px;font-size:.95rem}
+    input:focus,select:focus{outline:none;border-color:#6cab7a;box-shadow:0 0 0 3px rgba(65,146,88,.12)}
+    button{background:#2f8a46;color:#fff;font-weight:700;border:none;cursor:pointer;margin-top:10px}
+    button:hover{background:#26753a}
+    .msg{margin-top:10px;font-size:.9rem;white-space:pre-line}
+    .ok{color:#1f7a3a}.err{color:#b42318}
+    ul.errors{margin:8px 0 0;padding-left:18px}
+    ul.errors li{margin-bottom:4px}
+    @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head"><h1>Entrar na CuralA</h1><a href="/">Voltar para home</a></div>
+    <div class="grid">
+      <section class="card">
+        <h2>Cadastrar paciente</h2>
+        <form id="formCadastro" novalidate>
+          {% csrf_token %}
+          <label>Nome completo</label><input name="nome_completo" required>
+          <label>Usuário</label><input name="username" required>
+          <label>E-mail</label><input name="email" type="email" required>
+          <label>Senha</label><input name="password" type="password" required>
+          <p class="hint">Use pelo menos 8 caracteres, com letras e números. Evite sequências como 123456.</p>
+          <label>Confirmar senha</label><input name="confirmar_senha" type="password" required>
+          <label>Sexo</label>
+          <select name="sexo"><option value="nao_informado">Não informado</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option><option value="outro">Outro</option></select>
+          <label>Telefone</label><input name="telefone">
+          <label>Data de nascimento</label><input name="data_nascimento" type="date">
+          <button type="submit">Criar conta</button>
+        </form>
+        <div id="msgCadastro" class="msg"></div>
+      </section>
+
+      <section class="card">
+        <h2>Já tenho conta</h2>
+        <form id="formLogin" novalidate>
+          {% csrf_token %}
+          <label>Usuário</label><input name="username" required>
+          <label>Senha</label><input name="password" type="password" required>
+          <button type="submit">Entrar e ir para triagem</button>
+        </form>
+        <div id="msgLogin" class="msg"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const msgCadastro = document.getElementById('msgCadastro');
+    const msgLogin = document.getElementById('msgLogin');
+    const loginForm = document.getElementById('formLogin');
+
+    function getCookie(name){
+      const cookies = document.cookie ? document.cookie.split(';') : [];
+      for (const item of cookies) {
+        const cookie = item.trim();
+        if (cookie.startsWith(name + '=')) {
+          return decodeURIComponent(cookie.substring(name.length + 1));
+        }
+      }
+      return '';
+    }
+
+    function getCsrfToken(){
+      const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+      if (input && input.value) return input.value;
+      return getCookie('csrftoken');
+    }
+
+    function headersJson(){
+      return {
+        'Content-Type':'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      };
+    }
+
+    function msg(el, text, ok=false){
+      el.textContent = text;
+      el.className = 'msg ' + (ok ? 'ok' : 'err');
+    }
+
+    function extrairMensagensErro(payload){
+      if (!payload || typeof payload !== 'object') return ['Erro inesperado.'];
+      const mensagens = [];
+      for (const [campo, valor] of Object.entries(payload)) {
+        if (Array.isArray(valor)) {
+          valor.forEach((item) => mensagens.push(campo === 'non_field_errors' ? String(item) : `${campo}: ${item}`));
+        } else if (typeof valor === 'string') {
+          mensagens.push(campo === 'detalhe' ? valor : `${campo}: ${valor}`);
+        } else if (valor && typeof valor === 'object') {
+          mensagens.push(...extrairMensagensErro(valor).map((m) => `${campo}: ${m}`));
+        }
+      }
+      return mensagens.length ? mensagens : ['Não foi possível concluir a operação.'];
+    }
+
+    document.getElementById('formCadastro').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      msg(msgCadastro, '');
+
+      const f = new FormData(e.target);
+      const data = Object.fromEntries(f.entries());
+      if(!data.data_nascimento) delete data.data_nascimento;
+
+      const r = await fetch('/api/autenticacao/cadastro/', {
+        method:'POST',
+        headers:headersJson(),
+        credentials:'include',
+        body:JSON.stringify(data)
+      });
+
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok){
+        msg(msgCadastro, extrairMensagensErro(j).join('\n'));
+        return;
+      }
+
+      msg(msgCadastro, 'Cadastro realizado com sucesso. Faça login ao lado.', true);
+      e.target.reset();
+
+      loginForm.username.value = data.username || '';
+      loginForm.password.focus();
+    });
+
+    document.getElementById('formLogin').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      msg(msgLogin, '');
+
+      const f = new FormData(e.target);
+      const data = Object.fromEntries(f.entries());
+
+      const r = await fetch('/api/autenticacao/login/', {
+        method:'POST',
+        headers:headersJson(),
+        credentials:'include',
+        body:JSON.stringify(data)
+      });
+
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok){
+        msg(msgLogin, j.detalhe || j.detail || extrairMensagensErro(j).join('\\n'));
+        return;
+      }
+
+      msg(msgLogin, 'Login realizado. Redirecionando para triagem...', true);
+      setTimeout(()=>window.location.href='/chat-teste/', 500);
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+

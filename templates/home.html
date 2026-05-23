@@ -1,0 +1,189 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CuralA | Triagem Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+  <div class="page-bg"></div>
+
+  <header class="header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#inicio" aria-label="CuralA">
+        <span class="logo-mark">AI</span>
+        <span class="brand-title"><strong>CuralA</strong> | Triagem Inteligente</span>
+      </a>
+
+      <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+
+      <nav class="nav" id="navMenu">
+        <a href="#inicio" class="is-active">Início</a>
+        <a href="#como-funciona">Como Funciona</a>
+        <a href="#seguranca">Segurança</a>
+        <a href="#ajuda">Ajuda</a>
+        <a href="/cadastro/" class="btn-enter js-enter-link">Entrar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="inicio" class="hero-section">
+      <div class="container hero-grid">
+        <div>
+          <h1>Sua Orientação Médica Inicial por Inteligência Artificial.</h1>
+          <p>
+            Conte-nos os seus sintomas. Nossa IA analisa as informações para guiar os
+            <strong>próximos passos da sua jornada</strong> de saúde, ajudando você
+            antes do atendimento presencial.
+          </p>
+          <div class="hero-actions">
+            <a href="/cadastro/" class="btn-primary js-start-link">Iniciar Triagem <span>›</span></a>
+            <a href="#como-funciona" class="btn-secondary">Saiba Mais</a>
+          </div>
+        </div>
+
+        <aside class="security-box" id="seguranca">
+          <h2><i data-lucide="shield-check"></i> Segurança e Confiabilidade</h2>
+          <ul>
+            <li>Seus dados estão seguros e protegidos. (LGPD)</li>
+            <li>Desenvolvido com médicos especialistas.</li>
+          </ul>
+          <p>
+            <strong>AVISO:</strong> Este sistema de IA fornece orientação inicial baseada
+            em protocolos clínicos. Ele <strong>NÃO</strong> substitui um diagnóstico médico profissional.
+            Em casos de emergência, procure um hospital imediatamente.
+          </p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="features-section">
+      <div class="container feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon-group">
+            <i data-lucide="message-circle"></i>
+            <i data-lucide="stethoscope"></i>
+          </div>
+          <h3>Chat Clínico por IA</h3>
+          <p>Converse com nossa IA sobre seus sintomas e histórico de saúde de forma interativa e fluida.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon-group">
+            <i data-lucide="chart-line"></i>
+            <i data-lucide="triangle-alert"></i>
+          </div>
+          <h3>Classificação de Risco</h3>
+          <p>A IA analisa a gravidade dos seus sintomas de acordo com protocolos médicos e nível de urgência.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon-group">
+            <i data-lucide="map"></i>
+            <i data-lucide="route"></i>
+          </div>
+          <h3>Encaminhamento Inteligente</h3>
+          <p>Receba recomendações de cuidado: monitoramento, telemedicina ou atendimento presencial (UPA/Hospital).</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="how-section">
+      <div class="container">
+        <p class="chip">COMO FUNCIONA</p>
+        <h2>Triagem inteligente em 3 passos</h2>
+        <p class="sub">Um processo simples, rápido e seguro para cuidar da sua saúde com tecnologia.</p>
+
+        <div class="steps-row">
+          <article class="step-item">
+            <div class="step-ico"><i data-lucide="clipboard-list"></i></div>
+            <div>
+              <span class="step-num">01</span>
+              <h3>Conte seus sintomas</h3>
+              <p>Responda algumas perguntas sobre o que você está sentindo.</p>
+            </div>
+          </article>
+
+          <div class="step-line">→</div>
+
+          <article class="step-item">
+            <div class="step-ico"><i data-lucide="brain"></i></div>
+            <div>
+              <span class="step-num">02</span>
+              <h3>IA analisa e classifica</h3>
+              <p>Nossa inteligência artificial avalia seus sintomas com base em protocolos médicos.</p>
+            </div>
+          </article>
+
+          <div class="step-line">→</div>
+
+          <article class="step-item">
+            <div class="step-ico"><i data-lucide="shield"></i></div>
+            <div>
+              <span class="step-num">03</span>
+              <h3>Receba orientação</h3>
+              <p>Você recebe uma classificação de risco e a recomendação mais adequada para o seu caso.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="audience-grid" id="ajuda">
+          <article class="audience-card">
+            <div class="aud-head"><i data-lucide="user-round"></i><h3>Para você, mais segurança e comodidade</h3></div>
+            <ul>
+              <li><i data-lucide="check-circle-2"></i>Orientações claras e personalizadas</li>
+              <li><i data-lucide="check-circle-2"></i>Mais segurança antes do atendimento</li>
+              <li><i data-lucide="check-circle-2"></i>Acompanhamento do seu histórico de saúde</li>
+            </ul>
+            <img src="{% static 'img/mulher.png' %}" alt="Paciente usando celular">
+          </article>
+
+          <article class="audience-card">
+            <div class="aud-head"><i data-lucide="users-round"></i><h3>Para a equipe de saúde, mais eficiência</h3></div>
+            <ul>
+              <li><i data-lucide="check-circle-2"></i>Priorização inteligente de casos</li>
+              <li><i data-lucide="check-circle-2"></i>Mais eficiência no atendimento</li>
+              <li><i data-lucide="check-circle-2"></i>Dados e relatórios para melhores decisões</li>
+            </ul>
+            <img src="{% static 'img/medico.png' %}" alt="Médico sorrindo">
+          </article>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><span class="m-ico"><i data-lucide="shield-check"></i></span><div><strong>12.842+</strong><p>Triagens realizadas<br><small>+18% este mês</small></p></div></div>
+          <div class="metric"><span class="m-ico"><i data-lucide="clock-3"></i></span><div><strong>4min</strong><p>Tempo médio<br>de avaliação<br><small>-12% este mês</small></p></div></div>
+          <div class="metric"><span class="m-ico"><i data-lucide="users-round"></i></span><div><strong>98%</strong><p>Satisfação<br>dos usuários<br><small>+4% este mês</small></p></div></div>
+          <div class="metric"><span class="m-ico"><i data-lucide="lock"></i></span><div><strong>Segurança</strong><p>Seus dados<br>são protegidos</p></div></div>
+        </div>
+
+        <div class="cta-box">
+          <div>
+            <h3>Pronto para começar?</h3>
+            <p>Faça sua triagem e receba orientações personalizadas em poucos minutos.</p>
+          </div>
+          <div class="cta-right">
+            <a href="/cadastro/" class="btn-primary js-start-link">Iniciar Triagem <span>›</span></a>
+            <p><i data-lucide="lock"></i>É rápido, gratuito e seguro</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container foot-wrap">
+      <span class="status"><span class="dot"></span>Status</span>
+      <p>© 2024 CuralA. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="{% static 'js/home.js' %}"></script>
+</body>
+</html>
