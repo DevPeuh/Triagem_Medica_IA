@@ -39,7 +39,6 @@ Quando aplicavel, o sistema tambem gera pre-agendamento e permite confirmar, rea
 - `configuracao/`: configuracoes globais e roteamento principal
 - `templates/`: paginas HTML, incluindo tela de teste do chat
 - `estaticos/`: CSS, JS e imagens
-- `docs/`: documentacao de banco e modelagem
 
 ## Como Executar Localmente
 
