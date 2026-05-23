@@ -46,8 +46,8 @@ Quando aplicavel, o sistema tambem gera pre-agendamento e permite confirmar, rea
 1. Criar e ativar ambiente virtual:
 
 ```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
+py -m venv venv
+venv\Scripts\Activate
 ```
 
 2. Instalar dependencias:
@@ -113,10 +113,3 @@ Para executar a suite de testes:
 ```powershell
 py manage.py test
 ```
-
-## Documentacao Complementar
-
-- [Entrega de banco de dados](docs/01_entrega_banco_dados.md)
-- [DDL PostgreSQL](docs/02_ddl_postgresql.sql)
-- [MER/DER](docs/03_mer_der.mmd)
-- [Migrations e regras](docs/04_migrations_orm_e_regras.md)
