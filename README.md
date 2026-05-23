@@ -1,161 +1,122 @@
-﻿# Projeto de Faculdade - Sistema Web de Triagem Médica com IA (Regras)
+# Triagem Medica IA
 
-## Migracao para pasta nova sem historico antigo
+Sistema web de triagem medica com classificacao de risco por regras, fluxo de encaminhamento e pre-agendamento, com interface de chat para coleta guiada de sintomas.
 
-Consulte: `README_MIGRACAO_NOVA_PASTA.md`
+## Visao Geral
 
-## Como executar
+O projeto registra sintomas informados pelo paciente, calcula nivel de risco clinico, gera orientacoes e encaminha para o proximo passo adequado:
 
-1. Criar ambiente virtual:
+- autocuidado orientado
+- consulta prioritaria
+- urgencia
+- emergencia
+
+Quando aplicavel, o sistema tambem gera pre-agendamento e permite confirmar, reagendar ou cancelar.
+
+## Principais Funcionalidades
+
+- autenticacao e cadastro de usuarios
+- cadastro e gestao de pacientes
+- catalogo de sintomas
+- triagem tradicional e triagem rapida
+- chat de triagem com IA local
+- classificacao de risco com justificativa
+- encaminhamento clinico
+- pre-agendamento com acoes de confirmacao, reagendamento e cancelamento
+- endpoint de monitoramento do modulo de chat
+
+## Stack Tecnica
+
+- Python 3
+- Django
+- Django REST Framework
+- PostgreSQL
+- Integracao com IA local (Ollama)
+
+## Estrutura do Projeto
+
+- `aplicacoes/`: apps de dominio (autenticacao, triagens, encaminhamentos, chat, usuarios, pacientes, sintomas)
+- `configuracao/`: configuracoes globais e roteamento principal
+- `templates/`: paginas HTML, incluindo tela de teste do chat
+- `estaticos/`: CSS, JS e imagens
+- `docs/`: documentacao de banco e modelagem
+
+## Como Executar Localmente
+
+1. Criar e ativar ambiente virtual:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-2. Instalar dependências:
+2. Instalar dependencias:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-3. Criar arquivo `.env` com base em `.env.exemplo`.
-   O projeto esta configurado para usar `PostgreSQL 18` (`DB_ENGINE=django.db.backends.postgresql`) na porta `5433`.
-   Preencha `SECRET_KEY` com uma chave forte e os campos `DB_*` com os dados do seu banco.
-
-4. Rodar migrações:
+3. Criar arquivo de configuracao local a partir do exemplo:
 
 ```powershell
-py manage.py makemigrations
+copy .env.exemplo .env
+```
+
+4. Executar migracoes:
+
+```powershell
 py manage.py migrate
 ```
 
-5. Criar superusuário:
+5. (Opcional) Criar superusuario:
 
 ```powershell
 py manage.py createsuperuser
 ```
 
-6. Subir servidor:
-
-```powershell
-py manage.py runserver
-```
-
-## Endpoints principais
-
-- `GET /api/status/`
-- `POST /api/autenticacao/cadastro/`
-- `POST /api/autenticacao/login/`
-- `POST /api/autenticacao/logout/`
-- `GET /api/autenticacao/sessao/`
-- `CRUD /api/pacientes/`
-- `CRUD /api/sintomas/`
-- `CRUD /api/triagens/`
-- `POST /api/triagens/{id}/classificar/`
-- `POST /api/triagens/triagem-rapida/`
-- `POST /api/chat-ia/triagem/`
-- `GET /api/triagens/minhas/`
-- `CRUD /api/classificacao-risco/`
-- `CRUD /api/encaminhamentos/`
-- `GET/POST /api/encaminhamentos/agenda-profissionais/`
-- `GET /api/encaminhamentos/pre-agendamentos/`
-- `CRUD /api/usuarios/`
-
-## Observação do projeto
-
-A classificação de risco inicial foi implementada como motor de regras clínicas explicáveis (MVP acadêmico), permitindo rastreabilidade da decisão e evolução posterior para modelos de IA mais avançados.
-
-## Fluxo de paciente (cadastro + chat de triagem)
-
-1. O paciente cria conta em `POST /api/autenticacao/cadastro/`.
-2. Faz login em `POST /api/autenticacao/login/`.
-3. Usa o chat de triagem em `POST /api/chat-ia/triagem/`.
-4. Consulta histórico salvo em `GET /api/triagens/minhas/`.
-
-### Exemplo de cadastro
-
-```json
-{
-  "username": "maria.silva",
-  "email": "maria@example.com",
-  "password": "SenhaForte@123",
-  "confirmar_senha": "SenhaForte@123",
-  "nome_completo": "Maria Silva",
-  "sexo": "feminino",
-  "telefone": "11999999999"
-}
-```
-
-### Exemplo de triagem rápida para paciente autenticado
-
-```json
-{
-  "sintomas": [
-    {
-      "descricao": "dor de cabeça leve",
-      "intensidade": 2,
-      "duracao": "2 dias",
-      "possui_sinal_alerta": false
-    }
-  ],
-  "observacoes_gerais": "início da conversa"
-}
-```
-
-## Teste de IA local (sem custo)
-
-1. Instale e rode o Ollama na máquina.
-2. Baixe um modelo, por exemplo: `ollama pull llama3.1:8b`.
-3. Garanta no `.env`:
-   - `OLLAMA_URL=http://localhost:11434`
-   - `OLLAMA_MODEL=llama3.1:8b`
-4. Abra `http://127.0.0.1:8000/chat-teste/` para testar o chat.
-
-
-## Performance e estabilidade do chat IA
-
-A API de chat agora possui:
-
-- Retry automatico em falhas temporarias da IA local.
-- Fallback seguro (nao classifica automaticamente quando a IA falha).
-- Header X-Response-Time-ms em todas as respostas.
-- Endpoint de monitoramento em `GET /api/chat-ia/monitoramento/`.
-
-Variaveis recomendadas no .env:
-
-- OLLAMA_TIMEOUT_SECONDS=45
-- OLLAMA_RETRY_ATTEMPTS=2
-- OLLAMA_RETRY_BACKOFF_SECONDS=0.4
-- OLLAMA_NUM_PREDICT=180
-- OLLAMA_NUM_PREDICT_FAST=140
-- OLLAMA_MAX_HISTORY_MESSAGES=3
-- OLLAMA_MAX_INPUT_CHARS=700
-- OLLAMA_KEEP_ALIVE=10m
-- CHAT_IA_SLOW_REQUEST_MS=12000
-
-
-
-## Pre-agendamento automatico
-
-A triagem agora gera pre-agendamento automatico quando a recomendacao for `consulta` ou `urgencia`.
-
-1. Rode migrações:
-
-```powershell
-py manage.py migrate
-```
-
-2. Popule agenda demo:
+6. (Opcional) Popular agenda de demonstracao para fluxo de agendamento:
 
 ```powershell
 py manage.py popular_agenda_demo
 ```
 
-3. Durante o chat, ao finalizar a triagem, o retorno inclui:
+7. Iniciar servidor:
 
-- `triagem.pre_agendamento.profissional`
-- `triagem.pre_agendamento.horario_sugerido`
-- `mensagem_encaminhamento` (texto pronto para o paciente)
+```powershell
+py manage.py runserver
+```
 
+## Acesso Rapido
 
+- Home: `http://127.0.0.1:8000/`
+- Tela de teste do chat: `http://127.0.0.1:8000/chat-teste/`
+- API base: `http://127.0.0.1:8000/api/`
+
+## Endpoints Relevantes
+
+- `POST /api/autenticacao/cadastro/`
+- `POST /api/autenticacao/login/`
+- `POST /api/autenticacao/logout/`
+- `GET /api/autenticacao/sessao/`
+- `POST /api/chat-ia/triagem/`
+- `GET /api/chat-ia/monitoramento/`
+- `POST /api/triagens/triagem-rapida/`
+- `POST /api/triagens/{id}/classificar/`
+- `GET /api/triagens/minhas/`
+- `GET/POST /api/encaminhamentos/agenda-profissionais/`
+- `GET /api/encaminhamentos/pre-agendamentos/`
+
+## Testes
+
+Para executar a suite de testes:
+
+```powershell
+py manage.py test
+```
+
+## Documentacao Complementar
+
+- [Entrega de banco de dados](docs/01_entrega_banco_dados.md)
+- [DDL PostgreSQL](docs/02_ddl_postgresql.sql)
+- [MER/DER](docs/03_mer_der.mmd)
+- [Migrations e regras](docs/04_migrations_orm_e_regras.md)
